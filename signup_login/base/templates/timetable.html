@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Time Table - Class {{ class_name }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      color: #346699;
+      margin-top: 20px;
+    }
+    table {
+      width: 95%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #f8f8f8;
+      font-weight: bold;
+    }
+    td {
+      height: 60px; /* Increased height to accommodate two lines */
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    tr:hover td:not(.break-cell) {
+      background-color: #f0f8ff;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 10px;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .logout {
+      background-color: #d9534f;
+    }
+    .goback {
+      background-color: #337ab7;
+    }
+    .header-buttons {
+      display: flex;
+      justify-content: space-between;
+      width: 95%;
+      margin: 0 auto;
+    }
+    .period-time {
+      font-size: 0.8em;
+      color: #666;
+    }
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 10% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 50%;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .close:hover {
+      color: black;
+    }
+    .subject-form {
+      margin-top: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-group select, .form-group input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .btn-save {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-save:hover {
+      background-color: #45a049;
+    }
+    .break-cell {
+      background-color: #f5f5f5;
+      cursor: default;
+    }
+    /* Two-line content styling */
+    .subject-name {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 3px;
+    }
+    .teacher-name {
+      font-size: 0.85em;
+      color: #555;
+      display: block;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-buttons">
+    <a href="{% url 'logout' %}" class="btn logout">Logout</a>
+    <a href="{% url 'details' %}" class="btn goback">Go Back</a>
+  </div>
+
+  <h2>Time Table - Class {{ class_name }}</h2>
+
+  <table id="timetable">
+    <thead>
+      <tr>
+        <th>Weekdays</th>
+        {% for slot in time_slots %}
+          <th>
+            {% if slot.type == 'period' %}
+              Period{{ slot.number }}<br>
+            {% else %}
+              Break{{ slot.number }}<br>
+            {% endif %}
+            <span class="period-time">{{ slot.start }} to {{ slot.end }}</span>
+          </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for day in days %}
+      <tr>
+        <td>{{ day }}</td>
+        {% for slot in time_slots %}
+          {% if slot.type == 'period' %}
+            <td data-day="{{ day|lower }}" data-period="{{ slot.number }}" data-start="{{ slot.start }}" data-end="{{ slot.end }}"></td>
+          {% else %}
+            <td class="break-cell">BREAK</td>
+          {% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Modal for adding subjects -->
+  <div id="subjectModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>Add Subject to <span id="modal-time"></span></h3>
+      <div class="subject-form">
+        <div class="form-group">
+          <label for="subject">Subject:</label>
+          <select id="subject">
+            <option value="">Select a subject</option>
+            <option value="Mathematics">Mathematics</option>
+            <option value="Science">Science</option>
+            <option value="English">English</option>
+            <option value="History">History</option>
+            <option value="Geography">Geography</option>
+            <option value="Art">Art</option>
+            <option value="Physical Education">Physical Education</option>
+            <option value="Music">Music</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="teacher">Teacher:</label>
+          <input type="text" id="teacher" placeholder="Enter teacher's name">
+        </div>
+        <button class="btn-save" id="save-subject">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Get modal elements
+      const modal = document.getElementById('subjectModal');
+      const closeBtn = document.querySelector('.close');
+      const modalTime = document.getElementById('modal-time');
+      const saveBtn = document.getElementById('save-subject');
+      
+      // Store the currently selected cell
+      let selectedCell = null;
+      
+      // Add click event to all timetable cells except break cells and header
+      const cells = document.querySelectorAll('td[data-day]');
+      cells.forEach(cell => {
+        cell.addEventListener('click', function() {
+          // Set the selected cell
+          selectedCell = this;
+          
+          // Get day and period info
+          const day = this.getAttribute('data-day');
+          const period = this.getAttribute('data-period');
+          const startTime = this.getAttribute('data-start');
+          const endTime = this.getAttribute('data-end');
+          
+          // Update modal title
+          modalTime.textContent = `${day.charAt(0).toUpperCase() + day.slice(1)} - Period ${period} (${startTime} to ${endTime})`;
+          
+          // Pre-fill form if subject already exists
+          const subjectElement = this.querySelector('.subject-name');
+          const teacherElement = this.querySelector('.teacher-name');
+          
+          if (subjectElement && teacherElement) {
+            document.getElementById('subject').value = subjectElement.textContent;
+            document.getElementById('teacher').value = teacherElement.textContent;
+          } else {
+            // Clear form if no subject
+            document.getElementById('subject').value = '';
+            document.getElementById('teacher').value = '';
+          }
+          
+          // Show modal
+          modal.style.display = 'block';
+        });
+      });
+      
+      // Close modal when clicking X
+      closeBtn.addEventListener('click', function() {
+        modal.style.display = 'none';
+      });
+      
+      // Close modal when clicking outside
+      window.addEventListener('click', function(event) {
+        if (event.target == modal) {
+          modal.style.display = 'none';
+        }
+      });
+      
+      // Save subject information
+      saveBtn.addEventListener('click', function() {
+        const subject = document.getElementById('subject').value;
+        const teacher = document.getElementById('teacher').value;
+        
+        if (subject && selectedCell) {
+          // Clear the cell
+          selectedCell.innerHTML = '';
+          
+          // Create subject element
+          const subjectElement = document.createElement('span');
+          subjectElement.className = 'subject-name';
+          subjectElement.textContent = subject;
+          
+          // Create teacher element
+          const teacherElement = document.createElement('span');
+          teacherElement.className = 'teacher-name';
+          teacherElement.textContent = teacher;
+          
+          // Add elements to cell
+          selectedCell.appendChild(subjectElement);
+          selectedCell.appendChild(teacherElement);
+          
+          // Add some color based on subject
+          const colors = {
+            'Mathematics': '#e1f5fe',
+            'Science': '#f1f8e9',
+            'English': '#fff3e0',
+            'History': '#fce4ec',
+            'Geography': '#e8f5e9',
+            'Art': '#fff9c4',
+            'Physical Education': '#ffebee',
+            'Music': '#f3e5f5'
+          };
+          
+          selectedCell.style.backgroundColor = colors[subject] || '#f5f5f5';
+          
+          // Close modal
+          modal.style.display = 'none';
+        } else if (!subject) {
+          alert('Please select a subject');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Time Table</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .btn-logout {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+    }
+
+    .btn-logout:hover {
+      background-color: #c82333;
+    }
+
+    .btn-submit {
+      background-color: #0d6efd;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      width: 100%;
+    }
+
+    .btn-submit:hover {
+      background-color: #0b5ed7;
+    }
+
+    .form-section {
+      margin-top: 30px;
+    }
+
+    .form-section h4 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    .form-label {
+      font-weight: 500;
+    }
+
+    .break-input {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Manage Time Table Section -->
+    <h2>Manage Time Table</h2>
+    <div class="mb-3">
+      <label for="selectClass" class="form-label">Select class</label>
+      <select id="selectClass" class="form-select">
+        <option value="1" selected>1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+      </select>
+    </div>
+    <div class="d-flex justify-content-between">
+      <a href="{% url 'logout' %}" class="btn-logout">Logout</a>
+    </div>
+
+    <!-- Create Time Table Section -->
+    <div class="form-section">
+      <h4>Create Time Table</h4>
+      <form method="POST" action="{% url 'generate_timetable' %}">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+          <input type="text" class="form-control" name="class" placeholder="Enter class" required>
+        </div>
+
+        <div class="mb-3">
+          <input type="number" class="form-control" name="days" min="1" max="7" placeholder="No. of days" required>
+        </div>
+
+        <div class="mb-3">
+          <input type="number" class="form-control" name="periods" min="1" max="10" placeholder="No. of periods" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Start Time</label>
+          <input type="time" class="form-control" name="start_time" required>
+        </div>
+
+        <div class="mb-3">
+          <input type="number" class="form-control" name="duration" min="5" placeholder="Duration of each class (in minutes)" required>
+        </div>
+
+        <!-- Dropdown for number of breaks -->
+        <div class="mb-3">
+          <label for="breaks" class="form-label">No of Breaks</label>
+          <select id="breaks" name="breaks" class="form-select">
+            <option value="0" selected>0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+
+        <!-- Dynamic input fields for break positions -->
+        <div id="breakPositionsContainer"></div>
+
+        <button type="submit" class="btn-submit">SUBMIT</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const breaksDropdown = document.getElementById('breaks');
+    const breakPositionsContainer = document.getElementById('breakPositionsContainer');
+
+    breaksDropdown.addEventListener('change', function() {
+      // Clear existing fields
+      breakPositionsContainer.innerHTML = '';
+
+      const count = parseInt(this.value);
+
+      // If breaks > 0, create that many input fields
+      for (let i = 1; i <= count; i++) {
+        const div = document.createElement('div');
+        div.classList.add('mb-3', 'break-input');
+
+        div.innerHTML = `
+          <label class="form-label">Break ${i} - After which period?</label>
+          <input type="number" name="break_positions[]" class="form-control" min="1" placeholder="Enter period number" required>
+        `;
+        
+        breakPositionsContainer.appendChild(div);
+      }
+    });
+  </script>
+</body>
+</html>
