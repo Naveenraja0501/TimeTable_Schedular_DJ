@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Time Table - Class {{ class_name }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      color: #346699;
+      margin-top: 20px;
+    }
+    table {
+      width: 95%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #f8f8f8;
+      font-weight: bold;
+    }
+    td {
+      height: 60px;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 10px;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .logout {
+      background-color: #d9534f;
+    }
+    .goback {
+      background-color: #337ab7;
+    }
+    .header-buttons {
+      display: flex;
+      justify-content: space-between;
+      width: 95%;
+      margin: 0 auto;
+    }
+    .period-time {
+      font-size: 0.8em;
+      color: #666;
+    }
+    .break-cell {
+      background-color: #f5f5f5;
+    }
+    .view-mode-cell {
+      background-color: #f9f9f9;
+    }
+    .time-header {
+      background-color: #e8f4f8;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-buttons">
+    <a href="{% url 'logout' %}" class="btn logout">Logout</a>
+    <a href="{% url 'details' %}" class="btn goback">Go Back</a>
+  </div>
+
+  <h2>Viewing Time Table - Class {{ class_name }}</h2>
+
+  {% if time_slots and days %}
+    <table id="timetable">
+      <thead>
+        <tr>
+          <th>Time/Day</th>
+          {% for slot in time_slots %}
+            <th>
+              {% if slot.type == 'period' %}
+                Period {{ slot.number }}<br>
+                <span class="period-time">{{ slot.start }} - {{ slot.end }}</span>
+              {% else %}
+                Break {{ slot.number }}<br>
+                <span class="period-time">{{ slot.start }} - {{ slot.end }}</span>
+              {% endif %}
+            </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for day in days %}
+        <tr>
+          <td class="time-header">{{ day }}</td>
+          {% for slot in time_slots %}
+            {% if slot.type == 'period' %}
+              <td class="view-mode-cell">
+                <!-- Empty cell for period -->
+              </td>
+            {% else %}
+              <td class="break-cell">BREAK</td>
+            {% endif %}
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div style="margin: 20px;">
+      <a href="#" class="btn" style="background-color: #5cb85c;">Edit Timetable</a>
+      <a href="#" class="btn" style="background-color: #f0ad4e;" onclick="window.print()">Print Timetable</a>
+    </div>
+
+  {% else %}
+    <div style="padding: 15px; margin: 20px auto; background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; border-radius: 4px; width: 80%;">
+      <h3>No Timetable Data Available</h3>
+      <p>No timetable structure found for class {{ class_name }}.</p>
+      <p>Please create a timetable first.</p>
+      <a href="{% url 'generate_timetable' %}" class="btn" style="background-color: #5cb85c;">Create New Timetable</a>
+    </div>
+  {% endif %}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Disable any click events on table cells
+      const cells = document.querySelectorAll('td');
+      cells.forEach(cell => {
+        cell.addEventListener('click', function(e) {
+          e.preventDefault();
+        });
+      });
+    });
+  </script>
+</body>
+</html>

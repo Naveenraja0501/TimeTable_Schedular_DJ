@@ -74,19 +74,24 @@
 </head>
 <body>
   <div class="container">
-    <!-- Manage Time Table Section -->
-    <h2>Manage Time Table</h2>
+<!-- Manage Time Table Section -->
+<h2>Manage Time Table</h2>
+<form method="GET" action="{% url 'generate_timetable' %}">
     <div class="mb-3">
-      <label for="selectClass" class="form-label">Select class</label>
-      <select id="selectClass" class="form-select">
-        <option value="1" selected>1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-      </select>
+        <label for="selectClass" class="form-label">Select class</label>
+        <select id="selectClass" name="class_name" class="form-select" required>
+            <option value="">Select a class</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <!-- Add more options as needed -->
+        </select>
     </div>
     <div class="d-flex justify-content-between">
-      <a href="{% url 'logout' %}" class="btn-logout">Logout</a>
+        <button type="submit" class="btn btn-primary">Manage</button>
+        <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
     </div>
+</form>
 
     <!-- Create Time Table Section -->
     <div class="form-section">

@@ -1,6 +1,6 @@
 from django.urls import path,include
 from django.contrib.auth.views import LogoutView
-from .views import home,signup_view,login_view,details_view,generate_timetable
+from .views import signup_view,login_view,details_view,generate_timetable
 
 urlpatterns = [
     #path('', home, name="home"),
@@ -10,4 +10,5 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(next_page='login'), name="logout"),
     path('timetable/generate/', generate_timetable, name='generate_timetable'),
     
+
 ]
