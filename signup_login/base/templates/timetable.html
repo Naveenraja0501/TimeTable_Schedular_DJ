@@ -1,9 +1,4 @@
 
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -210,6 +205,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      console.log('calllll')
       const modal = document.getElementById('subjectModal');
       const closeBtn = document.querySelector('.close');
       const modalTime = document.getElementById('modal-time');
@@ -226,6 +222,12 @@
           const period = this.getAttribute('data-period');
           const startTime = this.getAttribute('data-start');
           const endTime = this.getAttribute('data-end');
+
+            // Store values in modal dataset
+          modal.dataset.day = day;
+          modal.dataset.period = period;
+          modal.dataset.startTime = startTime;
+          modal.dataset.endTime = endTime;
           
           modalTime.textContent = `${day.charAt(0).toUpperCase() + day.slice(1)} - Period ${period} (${startTime} to ${endTime})`;
           
@@ -254,9 +256,44 @@
         }
       });
       
-      saveBtn.addEventListener('click', function() {
+      saveBtn.addEventListener('click', async function() {
+        
         const subject = document.getElementById('subject').value;
         const teacher = document.getElementById('teacher').value;
+
+          // Retrieve stored values
+          const day = modal.dataset.day;
+          const period = modal.dataset.period;
+          const startTime = modal.dataset.startTime;
+          const endTime = modal.dataset.endTime;
+          const className = "{{ class_name }}";  
+
+          const data = {
+            timetable_id: className,     // example timetable ID
+            day: day,
+            period_number: period,
+            subject: subject,
+            teacher: teacher,
+            startTime: startTime,
+            endTime: endTime,
+          };
+
+          console.log("Data to be sent:", data); // Debugging line
+          
+          try {
+            const response = await fetch("/save_timetable_entry/", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            console.log("Server response:", result);
+          } catch (error) {
+            console.error("Error saving timetable entry:", error);
+          }
         
         if (subject && selectedCell) {
           selectedCell.innerHTML = '';
