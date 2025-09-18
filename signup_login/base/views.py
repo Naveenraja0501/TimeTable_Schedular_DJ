@@ -1,18 +1,18 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password,check_password
-from .models import User,Timetable
+from .models import User,Timetable,TimetableEntry
 from .forms import TimetableForm
 from datetime import datetime, timedelta
 from django.contrib.auth import authenticate, login
 
 from django.http import HttpResponse
 import math
+from django.utils import timezone
+from django.contrib import messages
 
-from django.shortcuts import render
-from django.http import HttpResponse
-from datetime import datetime
-from .models import Timetable, User
+import json
+from django.http import JsonResponse
 
 def signup_view(request):
     if request.method == "POST":
@@ -46,21 +46,7 @@ def signup_view(request):
     return render(request, "signup.html")
 
 from django.contrib.auth import authenticate, login
-'''
-def login_view(request):
-    if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        user = authenticate(request, email=email, password=password)
-        
-        if user is not None:
-            login(request, user)
-            return redirect('details')
-        else:
-            return render(request, 'login.html', {'error': 'Invalid credentials'})
-    
-    return render(request, 'login.html')
-'''
+
 def login_view(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -70,7 +56,6 @@ def login_view(request):
             user = User.objects.get(email=email)
             if check_password(password, user.password):
                 request.session["user_id"] = user.user_id
-               #request.session["user_id"] = user.id  # ✅ Manually store ID
                 request.session["user_name"] = user.name
                 return redirect("details")
             else:
@@ -81,15 +66,6 @@ def login_view(request):
     return render(request, "login.html")
 
 
-'''
-def details_view(request):
-    if request.user.is_authenticated:
-        # Get only this user's timetables
-        user_timetables = Timetable.objects.filter(user=request.user)
-        return render(request, 'details.html', {'timetables': user_timetables})
-    else:
-        return redirect('login')   
-'''
 def details_view(request):
     if "user_id" not in request.session:
         return redirect("login")
@@ -110,21 +86,12 @@ def details_view(request):
 
 
 
-def timetable(request):
-    return render(request,"timetable.html")
 
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+import json
 
-# views.py
-
-
-from django.utils import timezone
-from datetime import datetime, timedelta
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
-from django.contrib import messages
-#from django.contrib.auth.decorators import login_required
-
-#@login_required
 def generate_timetable(request):
     if request.method == 'POST':
         # Get form data
@@ -208,11 +175,6 @@ def generate_timetable(request):
         try:
             user = User.objects.get(user_id=request.session["user_id"])
             # Get the current user (replace with actual user retrieval)
-            #user = User.objects.first()  # Replace with actual user from session/request
-            #user = request.user
-    
-            #if not user.is_authenticated:
-                #return redirect('login')
             
             # Create Timetable entry with individual break fields
             timetable = Timetable.objects.create(
@@ -223,7 +185,6 @@ def generate_timetable(request):
                 start_time=start_time,
                 duration_minutes=period_duration,
                 no_of_breaks=breaks_count,
-               
                 break1_after_period=break1,
                 break2_after_period=break2,
                 break3_after_period=break3
@@ -262,12 +223,6 @@ def generate_timetable(request):
             })
         
         try:
-            #user = request.user  # This is the key change!
-            
-            #if not user.is_authenticated:
-                #return redirect('login')  # Redirect to login if not authenticated
-            
-            #user = User.objects.first()
             user = User.objects.get(user_id=request.session["user_id"])
             print(f"DEBUG: User: {user}")
             
@@ -374,3 +329,88 @@ def generate_timetable(request):
                 'class_name': class_name,
                 'error': f'Error retrieving timetable: {str(e)}'
             })
+        
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+import json
+
+@csrf_exempt
+@require_POST
+def save_timetable_entry(request):
+    try:
+        data = json.loads(request.body)
+        timetable_id = data.get('timetable_id')
+        day = data.get('day')
+        period_number = data.get('period_number')
+        subject = data.get('subject')
+        teacher = data.get('teacher')
+        
+        print(f"DEBUG: Received data - timetable_id: {timetable_id}, day: {day}, period: {period_number}")
+        
+        # Validate timetable_id
+        if not timetable_id:
+            print("DEBUG: Timetable ID is missing")
+            return JsonResponse({'status': 'error', 'message': 'Timetable ID is missing'})
+        
+        try:
+            timetable_id = int(timetable_id)
+        except (ValueError, TypeError):
+            print(f"DEBUG: Invalid timetable ID format: {timetable_id}")
+            return JsonResponse({'status': 'error', 'message': 'Invalid timetable ID format'})
+        
+        # Get the timetable object
+        try:
+            timetable = Timetable.objects.get(id=timetable_id)
+            print(f"DEBUG: Found timetable: {timetable.id}")
+        except Timetable.DoesNotExist:
+            print(f"DEBUG: Timetable not found with ID: {timetable_id}")
+            return JsonResponse({'status': 'error', 'message': 'Timetable not found'})
+        
+        # Update or create the timetable entry
+        entry, created = TimetableEntry.objects.update_or_create(
+            timetable=timetable,
+            day=day,
+            period_number=period_number,
+            defaults={
+                'subject': subject,
+                'teacher': teacher
+            }
+        )
+        
+        print(f"DEBUG: {'Created' if created else 'Updated'} timetable entry: {entry.id}")
+        return JsonResponse({'status': 'success', 'message': 'Entry saved successfully'})
+        
+    except Exception as e:
+        print(f"DEBUG: Error in save_timetable_entry: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': str(e)})
+    
+
+
+def get_timetable_content(request, timetable_id):
+    try:
+        timetable = Timetable.objects.get(id=timetable_id)
+        entries = TimetableEntry.objects.filter(timetable=timetable)
+        
+        # Organize data by day
+        timetable_data = {}
+        for entry in entries:
+            if entry.day not in timetable_data:
+                timetable_data[entry.day] = []
+            
+            timetable_data[entry.day].append({
+                'period': entry.period_number,
+                'subject': entry.subject or '',
+                'teacher': entry.teacher or '',
+                'start_time': entry.start_time.strftime('%H:%M'),
+                'end_time': entry.end_time.strftime('%H:%M'),
+                'is_break': entry.is_break
+            })
+        
+        return JsonResponse({'success': True, 'data': timetable_data})
+    
+    except Timetable.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Timetable not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

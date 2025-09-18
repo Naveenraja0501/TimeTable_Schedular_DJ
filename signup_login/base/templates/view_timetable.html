@@ -33,6 +33,11 @@
     }
     td {
       height: 60px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    tr:hover td:not(.break-cell) {
+      background-color: #f0f8ff;
     }
     .btn {
       padding: 10px 20px;
@@ -63,6 +68,77 @@
     }
     .break-cell {
       background-color: #f5f5f5;
+      cursor: default;
+    }
+    .subject-name {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 3px;
+    }
+    .teacher-name {
+      font-size: 0.85em;
+      color: #555;
+      display: block;
+      font-style: italic;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 10% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 50%;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .close:hover {
+      color: black;
+    }
+    .subject-form {
+      margin-top: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .btn-save {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-save:hover {
+      background-color: #45a049;
     }
     .view-mode-cell {
       background-color: #f9f9f9;
@@ -105,9 +181,7 @@
           <td class="time-header">{{ day }}</td>
           {% for slot in time_slots %}
             {% if slot.type == 'period' %}
-              <td class="view-mode-cell">
-                <!-- Empty cell for period -->
-              </td>
+              <td class="view-mode-cell" data-day="{{ day|lower }}" data-period="{{ slot.number }}" data-start="{{ slot.start }}" data-end="{{ slot.end }}"></td>
             {% else %}
               <td class="break-cell">BREAK</td>
             {% endif %}
@@ -118,27 +192,88 @@
     </table>
 
     <div style="margin: 20px;">
-      <a href="#" class="btn" style="background-color: #5cb85c;">Edit Timetable</a>
       <a href="#" class="btn" style="background-color: #f0ad4e;" onclick="window.print()">Print Timetable</a>
     </div>
-
   {% else %}
     <div style="padding: 15px; margin: 20px auto; background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; border-radius: 4px; width: 80%;">
       <h3>No Timetable Data Available</h3>
       <p>No timetable structure found for class {{ class_name }}.</p>
-      <p>Please create a timetable first.</p>
-      <a href="{% url 'generate_timetable' %}" class="btn" style="background-color: #5cb85c;">Create New Timetable</a>
     </div>
   {% endif %}
 
+  <!-- Modal -->
+  <div id="subjectModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>Add Subject to <span id="modal-time"></span></h3>
+      <div class="subject-form">
+        <div class="form-group">
+          <label for="subject">Subject:</label>
+          <input type="text" id="subject" placeholder="Enter subject name">
+        </div>
+        <div class="form-group">
+          <label for="teacher">Teacher:</label>
+          <input type="text" id="teacher" placeholder="Enter teacher's name">
+        </div>
+        <button class="btn-save" id="save-subject">Save</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Disable any click events on table cells
-      const cells = document.querySelectorAll('td');
+      const modal = document.getElementById('subjectModal');
+      const closeBtn = document.querySelector('.close');
+      const modalTime = document.getElementById('modal-time');
+      const saveBtn = document.getElementById('save-subject');
+      let selectedCell = null;
+
+      const cells = document.querySelectorAll('td[data-day]');
       cells.forEach(cell => {
-        cell.addEventListener('click', function(e) {
-          e.preventDefault();
+        cell.addEventListener('click', function() {
+          selectedCell = this;
+          const day = this.getAttribute('data-day');
+          const period = this.getAttribute('data-period');
+          const startTime = this.getAttribute('data-start');
+          const endTime = this.getAttribute('data-end');
+
+          modalTime.textContent = `${day.charAt(0).toUpperCase() + day.slice(1)} - Period ${period} (${startTime} to ${endTime})`;
+
+          const subjectElement = this.querySelector('.subject-name');
+          const teacherElement = this.querySelector('.teacher-name');
+
+          document.getElementById('subject').value = subjectElement ? subjectElement.textContent : '';
+          document.getElementById('teacher').value = teacherElement ? teacherElement.textContent : '';
+
+          modal.style.display = 'block';
         });
+      });
+
+      closeBtn.addEventListener('click', () => modal.style.display = 'none');
+      window.addEventListener('click', (e) => { if (e.target == modal) modal.style.display = 'none'; });
+
+      saveBtn.addEventListener('click', function() {
+        const subject = document.getElementById('subject').value.trim();
+        const teacher = document.getElementById('teacher').value.trim();
+
+        if (subject && selectedCell) {
+          selectedCell.innerHTML = '';
+
+          const subjectElement = document.createElement('span');
+          subjectElement.className = 'subject-name';
+          subjectElement.textContent = subject;
+
+          const teacherElement = document.createElement('span');
+          teacherElement.className = 'teacher-name';
+          teacherElement.textContent = teacher;
+
+          selectedCell.appendChild(subjectElement);
+          selectedCell.appendChild(teacherElement);
+
+          modal.style.display = 'none';
+        } else {
+          alert('Please enter a subject name');
+        }
       });
     });
   </script>

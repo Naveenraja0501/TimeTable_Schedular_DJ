@@ -1,3 +1,9 @@
+
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,7 +38,7 @@
       font-weight: bold;
     }
     td {
-      height: 60px; /* Increased height to accommodate two lines */
+      height: 60px;
       cursor: pointer;
       transition: background-color 0.2s;
     }
@@ -109,7 +115,7 @@
       margin-bottom: 5px;
       font-weight: bold;
     }
-    .form-group select, .form-group input {
+    .form-group input {
       width: 100%;
       padding: 8px;
       border: 1px solid #ddd;
@@ -130,7 +136,6 @@
       background-color: #f5f5f5;
       cursor: default;
     }
-    /* Two-line content styling */
     .subject-name {
       font-weight: bold;
       display: block;
@@ -192,17 +197,7 @@
       <div class="subject-form">
         <div class="form-group">
           <label for="subject">Subject:</label>
-          <select id="subject">
-            <option value="">Select a subject</option>
-            <option value="Mathematics">Mathematics</option>
-            <option value="Science">Science</option>
-            <option value="English">English</option>
-            <option value="History">History</option>
-            <option value="Geography">Geography</option>
-            <option value="Art">Art</option>
-            <option value="Physical Education">Physical Education</option>
-            <option value="Music">Music</option>
-          </select>
+          <input type="text" id="subject" placeholder="Enter subject name">
         </div>
         <div class="form-group">
           <label for="teacher">Teacher:</label>
@@ -215,32 +210,25 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Get modal elements
       const modal = document.getElementById('subjectModal');
       const closeBtn = document.querySelector('.close');
       const modalTime = document.getElementById('modal-time');
       const saveBtn = document.getElementById('save-subject');
       
-      // Store the currently selected cell
       let selectedCell = null;
       
-      // Add click event to all timetable cells except break cells and header
       const cells = document.querySelectorAll('td[data-day]');
       cells.forEach(cell => {
         cell.addEventListener('click', function() {
-          // Set the selected cell
           selectedCell = this;
           
-          // Get day and period info
           const day = this.getAttribute('data-day');
           const period = this.getAttribute('data-period');
           const startTime = this.getAttribute('data-start');
           const endTime = this.getAttribute('data-end');
           
-          // Update modal title
           modalTime.textContent = `${day.charAt(0).toUpperCase() + day.slice(1)} - Period ${period} (${startTime} to ${endTime})`;
           
-          // Pre-fill form if subject already exists
           const subjectElement = this.querySelector('.subject-name');
           const teacherElement = this.querySelector('.teacher-name');
           
@@ -248,69 +236,45 @@
             document.getElementById('subject').value = subjectElement.textContent;
             document.getElementById('teacher').value = teacherElement.textContent;
           } else {
-            // Clear form if no subject
             document.getElementById('subject').value = '';
             document.getElementById('teacher').value = '';
           }
           
-          // Show modal
           modal.style.display = 'block';
         });
       });
       
-      // Close modal when clicking X
       closeBtn.addEventListener('click', function() {
         modal.style.display = 'none';
       });
       
-      // Close modal when clicking outside
       window.addEventListener('click', function(event) {
         if (event.target == modal) {
           modal.style.display = 'none';
         }
       });
       
-      // Save subject information
       saveBtn.addEventListener('click', function() {
         const subject = document.getElementById('subject').value;
         const teacher = document.getElementById('teacher').value;
         
         if (subject && selectedCell) {
-          // Clear the cell
           selectedCell.innerHTML = '';
           
-          // Create subject element
           const subjectElement = document.createElement('span');
           subjectElement.className = 'subject-name';
           subjectElement.textContent = subject;
           
-          // Create teacher element
           const teacherElement = document.createElement('span');
           teacherElement.className = 'teacher-name';
           teacherElement.textContent = teacher;
           
-          // Add elements to cell
           selectedCell.appendChild(subjectElement);
           selectedCell.appendChild(teacherElement);
           
-          // Add some color based on subject
-          const colors = {
-            'Mathematics': '#e1f5fe',
-            'Science': '#f1f8e9',
-            'English': '#fff3e0',
-            'History': '#fce4ec',
-            'Geography': '#e8f5e9',
-            'Art': '#fff9c4',
-            'Physical Education': '#ffebee',
-            'Music': '#f3e5f5'
-          };
-          
-          selectedCell.style.backgroundColor = colors[subject] || '#f5f5f5';
-          
-          // Close modal
           modal.style.display = 'none';
         } else if (!subject) {
-          alert('Please select a subject');
+          alert('Please enter a subject');
         }
       });
     });

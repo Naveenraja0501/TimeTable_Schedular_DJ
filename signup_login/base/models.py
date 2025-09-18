@@ -1,27 +1,8 @@
 # app/models.py 
 from django.db import models
 #from django.contrib.auth.models import User
-
-# models.py
-#from django.contrib.auth.models import AbstractUser
 from django.db import models
-"""
-class User(AbstractUser):
-    # Remove the 'password' field since AbstractUser already has it
-    name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=15)
-    
-    # Remove the password field - AbstractUser already has it properly implemented
-    # password field is already handled by AbstractUser with proper hashing
-    
-    # Required: specify custom fields for authentication
-    USERNAME_FIELD = 'email'  # Use email as login identifier
-    REQUIRED_FIELDS = ['username', 'name']  # Fields required when creating user
 
-    def __str__(self):
-        return self.email
-"""
 
 from django.db import models
 
@@ -56,6 +37,26 @@ class Timetable(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    break1_duration = models.IntegerField(null=True, blank=True)
+    break2_duration = models.IntegerField(null=True, blank=True)
+    break3_duration = models.IntegerField(null=True, blank=True) 
+
     class Meta:
         unique_together = ['user', 'class_name']  # Prevents duplicate class names per user
 
+class TimetableEntry(models.Model):
+    timetable = models.ForeignKey(Timetable, on_delete=models.CASCADE, related_name='entries')
+    day = models.CharField(max_length=20)  # Monday, Tuesday, etc.
+    period_number = models.IntegerField()
+    subject = models.CharField(max_length=100, blank=True, null=True)
+    teacher = models.CharField(max_length=100, blank=True, null=True)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    is_break = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ['timetable', 'day', 'period_number']
+        ordering = ['timetable', 'day', 'period_number']
+
+    def __str__(self):
+        return f"{self.day} - Period {self.period_number}: {self.subject or 'BREAK'}"

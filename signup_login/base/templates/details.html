@@ -68,30 +68,48 @@
     }
 
     .break-input {
+      margin-bottom: 15px;
+      padding: 15px;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      background-color: #f8f9fa;
+    }
+    
+    .break-title {
+      font-weight: bold;
+      color: #495057;
       margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-<!-- Manage Time Table Section -->
-<h2>Manage Time Table</h2>
-<form method="GET" action="{% url 'generate_timetable' %}">
-    <div class="mb-3">
+    <!-- Manage Time Table Section -->
+    <h2>Manage Time Table</h2>
+    <form method="GET" action="{% url 'generate_timetable' %}">
+      <div class="mb-3">
         <label for="selectClass" class="form-label">Select class</label>
         <select id="selectClass" name="class_name" class="form-select" required>
-            <option value="">Select a class</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <!-- Add more options as needed -->
+          <option value="">Select a class</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+          <option value="11">11</option>
+          <option value="12">12</option>
         </select>
-    </div>
-    <div class="d-flex justify-content-between">
+      </div>
+      <div class="d-flex justify-content-between">
         <button type="submit" class="btn btn-primary">Manage</button>
         <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
-    </div>
-</form>
+      </div>
+    </form>
 
     <!-- Create Time Table Section -->
     <div class="form-section">
@@ -100,7 +118,8 @@
         {% csrf_token %}
         
         <div class="mb-3">
-          <input type="text" class="form-control" name="class" placeholder="Enter class" required>
+          <input type="number" class="form-control" name="class" placeholder="Enter class (1-12)" min="1" max="12" required oninput="validateClassInput(this)">
+          <div class="invalid-feedback">Please enter a class between 1 and 12.</div>
         </div>
 
         <div class="mb-3">
@@ -131,7 +150,7 @@
           </select>
         </div>
 
-        <!-- Dynamic input fields for break positions -->
+        <!-- Dynamic input fields for break positions and durations -->
         <div id="breakPositionsContainer"></div>
 
         <button type="submit" class="btn-submit">SUBMIT</button>
@@ -141,6 +160,14 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    function validateClassInput(input) {
+      if (input.value > 12) {
+        input.setCustomValidity('Class value must be 12 or less');
+      } else {
+        input.setCustomValidity('');
+      }
+    }
+    
     const breaksDropdown = document.getElementById('breaks');
     const breakPositionsContainer = document.getElementById('breakPositionsContainer');
 
@@ -153,11 +180,20 @@
       // If breaks > 0, create that many input fields
       for (let i = 1; i <= count; i++) {
         const div = document.createElement('div');
-        div.classList.add('mb-3', 'break-input');
+        div.classList.add('break-input');
 
         div.innerHTML = `
-          <label class="form-label">Break ${i} - After which period?</label>
-          <input type="number" name="break_positions[]" class="form-control" min="1" placeholder="Enter period number" required>
+          <div class="break-title">Break ${i}</div>
+          <div class="row">
+            <div class="col-md-6 mb-2">
+              <label class="form-label">After which period?</label>
+              <input type="number" name="break_positions[]" class="form-control" min="1" placeholder="Enter period number" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label class="form-label">Duration (minutes)</label>
+              <input type="number" name="break_durations[]" class="form-control" min="5" placeholder="Break duration in minutes" required>
+            </div>
+          </div>
         `;
         
         breakPositionsContainer.appendChild(div);
@@ -166,3 +202,5 @@
   </script>
 </body>
 </html>
+
+
