@@ -75,14 +75,15 @@ WSGI_APPLICATION = 'signup_login.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'Signup_Login_Naveenuu',
-        'USER': 'root',
-        'PASSWORD': 'naveen',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'Signup_Login_Naveen',
+        'USER': 'postgres',
+        'PASSWORD': '12345',
         'HOST': 'localhost',  # or your remote host, e.g., '127.0.0.1'
-        'PORT': '3306',       # default Posgre port
+        'PORT': '5432',       # default Posgre port
     }
 }
+
 
 
 # Password validation
@@ -128,3 +129,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 LOGOUT_REDIRECT_URL = 'login'
+
+#AUTH_USER_MODEL = 'base.User' 

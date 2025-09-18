@@ -45,7 +45,22 @@ def signup_view(request):
 
     return render(request, "signup.html")
 
-
+from django.contrib.auth import authenticate, login
+'''
+def login_view(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        user = authenticate(request, email=email, password=password)
+        
+        if user is not None:
+            login(request, user)
+            return redirect('details')
+        else:
+            return render(request, 'login.html', {'error': 'Invalid credentials'})
+    
+    return render(request, 'login.html')
+'''
 def login_view(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -54,7 +69,8 @@ def login_view(request):
         try:
             user = User.objects.get(email=email)
             if check_password(password, user.password):
-                request.session["user_id"] = user.id  # ✅ Manually store ID
+                request.session["user_id"] = user.user_id
+               #request.session["user_id"] = user.id  # ✅ Manually store ID
                 request.session["user_name"] = user.name
                 return redirect("details")
             else:
@@ -64,11 +80,22 @@ def login_view(request):
 
     return render(request, "login.html")
 
+
+'''
+def details_view(request):
+    if request.user.is_authenticated:
+        # Get only this user's timetables
+        user_timetables = Timetable.objects.filter(user=request.user)
+        return render(request, 'details.html', {'timetables': user_timetables})
+    else:
+        return redirect('login')   
+'''
 def details_view(request):
     if "user_id" not in request.session:
         return redirect("login")
 
-    user = User.objects.get(id=request.session["user_id"])
+    #user = User.objects.get(id=request.session["user_id"])
+    user = User.objects.get(user_id=request.session["user_id"])
     
     if request.method == "POST":
         form = TimetableForm(request.POST)
@@ -81,8 +108,7 @@ def details_view(request):
         form = TimetableForm()
     return render(request,"details.html")
 
-def home(request):
-    return render(request,"home.html")
+
 
 def timetable(request):
     return render(request,"timetable.html")
@@ -96,9 +122,9 @@ from datetime import datetime, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib import messages
+#from django.contrib.auth.decorators import login_required
 
-
-
+#@login_required
 def generate_timetable(request):
     if request.method == 'POST':
         # Get form data
@@ -180,8 +206,13 @@ def generate_timetable(request):
 
         # Save to database
         try:
+            user = User.objects.get(user_id=request.session["user_id"])
             # Get the current user (replace with actual user retrieval)
-            user = User.objects.first()  # Replace with actual user from session/request
+            #user = User.objects.first()  # Replace with actual user from session/request
+            #user = request.user
+    
+            #if not user.is_authenticated:
+                #return redirect('login')
             
             # Create Timetable entry with individual break fields
             timetable = Timetable.objects.create(
@@ -192,6 +223,7 @@ def generate_timetable(request):
                 start_time=start_time,
                 duration_minutes=period_duration,
                 no_of_breaks=breaks_count,
+               
                 break1_after_period=break1,
                 break2_after_period=break2,
                 break3_after_period=break3
@@ -230,7 +262,13 @@ def generate_timetable(request):
             })
         
         try:
-            user = User.objects.first()
+            #user = request.user  # This is the key change!
+            
+            #if not user.is_authenticated:
+                #return redirect('login')  # Redirect to login if not authenticated
+            
+            #user = User.objects.first()
+            user = User.objects.get(user_id=request.session["user_id"])
             print(f"DEBUG: User: {user}")
             
             timetable = Timetable.objects.get(user=user, class_name=class_name)
