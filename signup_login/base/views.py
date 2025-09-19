@@ -189,6 +189,7 @@ def generate_timetable(request):
     # ------------------ GET existing timetable ------------------
     elif request.method == 'GET':
         class_name = request.GET.get('class_name')
+        print(type(class_name))
         if not class_name:
             return render(request, 'view_timetable.html', {
                 'error': 'Please select a class first.'
@@ -197,6 +198,26 @@ def generate_timetable(request):
         try:
             user = User.objects.get(user_id=request.session["user_id"])
             timetable = Timetable.objects.get(user=user, class_name=class_name)
+            
+            entries = TimetableEntry.objects.filter(timetable=int(class_name))
+            
+            
+            for entry in entries:
+                print(entry)
+
+            timetable_data = {}
+            for entry in entries:
+                if entry.day not in timetable_data:
+                    timetable_data[entry.day] = []
+                timetable_data[entry.day].append({
+                    'period': entry.period_number,
+                    'subject': entry.subject or '',
+                    'teacher': entry.teacher or '',
+                    'start_time': entry.start_time.strftime('%H:%M'),
+                    'end_time': entry.end_time.strftime('%H:%M'),
+                    'is_break': entry.is_break
+                })
+            print(timetable_data,'????????+++?????????')
 
             # Breaks
             break_positions = []
@@ -246,14 +267,15 @@ def generate_timetable(request):
 
                 period_counter += 1
 
-            weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+            weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
             selected_days = weekdays[:timetable.no_of_days]
-
+            print(time_slots,'*******************', selected_days)
             context = {
                 'class_name': class_name,
                 'days': selected_days,
                 'time_slots': time_slots,
                 'timetable_id': timetable.id,
+                'timetable_data': timetable_data
             }
             return render(request, 'view_timetable.html', context)
 
@@ -319,6 +341,7 @@ def get_timetable_content(request, timetable_id):
     try:
         timetable = Timetable.objects.get(id=timetable_id)
         entries = TimetableEntry.objects.filter(timetable=timetable)
+            
 
         timetable_data = {}
         for entry in entries:
@@ -332,10 +355,12 @@ def get_timetable_content(request, timetable_id):
                 'end_time': entry.end_time.strftime('%H:%M'),
                 'is_break': entry.is_break
             })
-
+        print(timetable_data,'>>>>>>>>>>>>>')
         return JsonResponse({'success': True, 'data': timetable_data})
 
     except Timetable.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Timetable not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+

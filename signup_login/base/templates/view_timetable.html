@@ -1,3 +1,4 @@
+{% load custom_filter %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,7 +34,6 @@
     }
     td {
       height: 60px;
-      cursor: pointer;
       transition: background-color 0.2s;
     }
     tr:hover td:not(.break-cell) {
@@ -158,38 +158,47 @@
   <h2>Viewing Time Table - Class {{ class_name }}</h2>
 
   {% if time_slots and days %}
-    <table id="timetable">
-      <thead>
-        <tr>
-          <th>Time/Day</th>
-          {% for slot in time_slots %}
-            <th>
-              {% if slot.type == 'period' %}
-                Period {{ slot.number }}<br>
-                <span class="period-time">{{ slot.start }} - {{ slot.end }}</span>
-              {% else %}
-                Break {{ slot.number }}<br>
-                <span class="period-time">{{ slot.start }} - {{ slot.end }}</span>
-              {% endif %}
-            </th>
-          {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for day in days %}
-        <tr>
-          <td class="time-header">{{ day }}</td>
-          {% for slot in time_slots %}
-            {% if slot.type == 'period' %}
-              <td class="view-mode-cell" data-day="{{ day|lower }}" data-period="{{ slot.number }}" data-start="{{ slot.start }}" data-end="{{ slot.end }}"></td>
+  <table id="timetable" border="1" cellspacing="0" cellpadding="6" 
+       style="border-collapse: collapse; text-align: center; width: 100%;">
+  <thead>
+    <tr>
+      <th>Time / Day</th>
+      {% for slot in time_slots %}
+        <th>
+          {% if slot.type == 'period' %}
+            Period {{ slot.number }}<br>
+            <span class="period-time">{{ slot.start }} - {{ slot.end }}</span>
+          {% else %}
+            Break {{ slot.number }}<br>
+            <span class="period-time">{{ slot.start }} - {{ slot.end }}</span>
+          {% endif %}
+        </th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for day in days %}
+      <tr>
+        <td><b>{{ day }}</b></td>
+        {% for slot in time_slots %}
+          <td {% if slot.type == "break" %} class="break" {% endif %}>
+            {% if slot.type == "period" %}
+              {% for entry in timetable_data|get_item:day %}
+                {% if entry.period == slot.number %}
+                  <div class="subject-name">{{ entry.subject }}</div>
+                  <div class="teacher-name">{{ entry.teacher }}</div>
+                {% endif %}
+              {% endfor %}
             {% else %}
-              <td class="break-cell">BREAK</td>
+              Break
             {% endif %}
-          {% endfor %}
-        </tr>
+          </td>
         {% endfor %}
-      </tbody>
-    </table>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
 
     <div style="margin: 20px;">
       <a href="#" class="btn" style="background-color: #f0ad4e;" onclick="window.print()">Print Timetable</a>
