@@ -45,6 +45,13 @@ class Timetable(models.Model):
         unique_together = ['user', 'class_name']  # Prevents duplicate class names per user
 
 class TimetableEntry(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        to_field='user_id',
+        null=True,  # ✅ allow NULL for old rows
+        blank=True
+    )
     timetable = models.ForeignKey(Timetable, on_delete=models.CASCADE, related_name='entries')
     day = models.CharField(max_length=20)  # Monday, Tuesday, etc.
     period_number = models.IntegerField()

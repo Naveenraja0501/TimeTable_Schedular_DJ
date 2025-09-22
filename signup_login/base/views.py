@@ -10,7 +10,6 @@ from .forms import TimetableForm
 
 import json
 
-
 # ------------------ SIGNUP ------------------
 def signup_view(request):
     if request.method == "POST":
@@ -197,9 +196,16 @@ def generate_timetable(request):
 
         try:
             user = User.objects.get(user_id=request.session["user_id"])
+            print(user,">>>>>>>>>>>>>>>>")
             timetable = Timetable.objects.get(user=user, class_name=class_name)
-            
-            entries = TimetableEntry.objects.filter(timetable=int(class_name))
+            print(timetable,"<<<<<<<<<<<<<")
+
+            #e=TimetableEntry.objects.get(user=user,timetable=cn)
+            #print(e,"eeeeeeeeeeeeeeeeeee")
+
+            entries = TimetableEntry.objects.filter(timetable=class_name, user=user) #user__user_id=user.user_id
+            #entries = TimetableEntry.objects.filter(timetable=int(class_name))
+            print(entries,"..................................")
             
             
             for entry in entries:
@@ -277,9 +283,11 @@ def generate_timetable(request):
                 'timetable_id': timetable.id,
                 'timetable_data': timetable_data
             }
+            print(context,"c ---------- c")
             return render(request, 'view_timetable.html', context)
 
         except Timetable.DoesNotExist:
+            print(f"Does Not Erorr-----------")
             return render(request, 'view_timetable.html', {
                 'class_name': class_name,
                 'error': f'Timetable for class {class_name} not found.'
@@ -322,8 +330,9 @@ def save_timetable_entry(request):
             timetable = Timetable.objects.get(id=int(timetable_id))
         except (ValueError, Timetable.DoesNotExist):
             return JsonResponse({'status': 'error', 'message': 'Invalid timetable ID'})
-
+        user = User.objects.get(user_id=request.session["user_id"])
         entry, created = TimetableEntry.objects.update_or_create(
+            user=user,
             timetable=timetable,
             day=day,
             period_number=period_number,
